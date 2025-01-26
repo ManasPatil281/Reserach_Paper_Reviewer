@@ -14,7 +14,7 @@ export default function Paraphrase() {
   const [mode, setMode] = useState('standard');
   const [language, setLanguage] = useState('English');
 
-  const API_BASE_URL = 'http://127.0.0.5:8005';
+  const API_BASE_URL = 'https://ai-research-paper-backend.onrender.com';
 
   const handleProcess = async () => {
     setLoading(true);
