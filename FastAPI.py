@@ -18,6 +18,7 @@ from pydantic import BaseModel
 import aiofiles
 import traceback
 import logging
+import uvicorn
 
 
 
@@ -428,9 +429,6 @@ async def review_file(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Error summarizing file content: {e}")
 
 
-def main():
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.5", port=8005)
 
 if __name__ == "__main__":
-    main()
+    app.run()
