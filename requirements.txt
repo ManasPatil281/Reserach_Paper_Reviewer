@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+python-dotenv
+aiofiles
+langchain_groq
+langchain_core
+langchain_google_genai
+langchain_huggingface
+langchain_community
+faiss-cpu
+pypdf
