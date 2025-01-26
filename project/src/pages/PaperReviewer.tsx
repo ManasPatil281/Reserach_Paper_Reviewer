@@ -10,7 +10,7 @@ export default function PaperReviewer() {
   const [result, setResult] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  const API_BASE_URL = 'http://127.0.0.5:8005';
+  const API_BASE_URL ='https://ai-research-paper-backend.onrender.com';
 
   const handleProcess = async () => {
     if (!file) return;
