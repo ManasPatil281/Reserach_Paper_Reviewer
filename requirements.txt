@@ -8,6 +8,5 @@ langchain_google_genai
 langchain_huggingface
 langchain_community
 pypdf
-faiss-gpu
 python-multipart
 
