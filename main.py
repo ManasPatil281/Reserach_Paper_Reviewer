@@ -30,9 +30,9 @@ load_dotenv()
 
 
 
-HF_TOKEN = os.getenv("HF_TOKEN")
+
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-Groq_API=os.getenv("GROQ_api_key_Resume")
+Groq_API="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"
 
 llm = ChatGroq(groq_api_key=Groq_API, model_name="llama-3.3-70b-versatile")
 llm2 = ChatGroq(groq_api_key=Groq_API, model_name="mixtral-8x7b-32768")
