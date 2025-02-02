@@ -36,8 +36,10 @@ jobs:
           pip install -r requirements.txt
 
       - name: Deploy to Cloud Run
-        uses: google-github-actions/deploy-cloudrun@v0
+        uses: google-github-actions/deploy-cloudrun@v2  # Updated to the latest version
         with:
           service: my-fastapi-service
-          image: gcr.io/$PROJECT_ID/my-fastapi-app:latest
-          region: us-central1
+          image: gcr.io/scholar-mate-449005/my-fastapi-app:latest
+          region: asia-south1
+          project_id: scholar-mate-449005
+  # Add your Google Cloud Project ID to secrets
