@@ -9,4 +9,5 @@ langchain_huggingface
 langchain_community
 pypdf
 python-multipart
+gunicorn
 
