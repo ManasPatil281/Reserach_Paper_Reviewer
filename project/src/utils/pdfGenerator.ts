@@ -10,53 +10,75 @@ declare module 'jspdf' {
 export const generatePDF = (title: string, content: string, sections?: { title: string; content: string }[]) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;
   const contentWidth = pageWidth - 2 * margin;
+  let yPosition = 30;
 
-  // Add title
+  // ✅ **Styled Title Section**
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(20);
-  doc.setTextColor(66, 66, 66);
-  const titleLines = doc.splitTextToSize(title, contentWidth);
-  doc.text(titleLines, margin, 20);
+  doc.setTextColor(255, 255, 255);
+  doc.setFillColor(33, 150, 243); // Blue background
+  doc.rect(margin, yPosition - 10, contentWidth, 15, 'F'); // Background box
+  doc.text(title, pageWidth / 2, yPosition, { align: 'center' });
+  yPosition += 20;
 
-  let yPosition = 20 + (titleLines.length * 10);
-
-  // Add date
-  doc.setFontSize(10);
-  doc.setTextColor(128, 128, 128);
-  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, yPosition);
+  // ✅ **Title Separator**
+  doc.setDrawColor(200, 200, 200);
+  doc.line(margin, yPosition, pageWidth - margin, yPosition);
   yPosition += 10;
 
+  // ✅ **Date**
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, yPosition);
+  yPosition += 15;
+
+  // 🔄 **New Page Handler**
+  const addNewPage = () => {
+    doc.addPage();
+    yPosition = 20;
+  };
+
+  // ✅ **Content Processing with Auto-Pagination**
+  const addContent = (text: string, fontSize = 12, bold = false) => {
+    doc.setFont('helvetica', bold ? 'bold' : 'normal');
+    doc.setFontSize(fontSize);
+    doc.setTextColor(80, 80, 80);
+
+    const lines = doc.splitTextToSize(text.trim(), contentWidth);
+    for (let i = 0; i < lines.length; i++) {
+      if (yPosition + 10 > pageHeight - margin) addNewPage();
+      doc.text(lines[i], margin, yPosition);
+      yPosition += 7;
+    }
+    yPosition += 5; // Extra spacing after paragraphs
+  };
+
   if (sections) {
-    // For structured content (Paper Review)
+    // ✅ **Structured Content with Sections**
     sections.forEach(section => {
       if (!section.content) return;
+      if (yPosition + 20 > pageHeight - margin) addNewPage();
 
-      // Section title
-      doc.setFontSize(14);
-      doc.setTextColor(66, 66, 66);
-      doc.text(section.title, margin, yPosition);
-      yPosition += 10;
-
-      // Section content
-      doc.setFontSize(12);
-      doc.setTextColor(96, 96, 96);
-      const contentLines = doc.splitTextToSize(section.content.trim(), contentWidth);
-      
-      if (yPosition + (contentLines.length * 7) > doc.internal.pageSize.getHeight() - margin) {
-        doc.addPage();
-        yPosition = 20;
-      }
-      
-      doc.text(contentLines, margin, yPosition);
-      yPosition += (contentLines.length * 7) + 10;
+      // Section Title
+      addContent(section.title, 16, true);
+      addContent(section.content);
     });
   } else {
-    // For unstructured content (Plagiarism Check)
-    doc.setFontSize(12);
-    doc.setTextColor(96, 96, 96);
-    const contentLines = doc.splitTextToSize(content, contentWidth);
-    doc.text(contentLines, margin, yPosition);
+    // ✅ **Unstructured Content**
+    addContent(content);
+  }
+
+  // ✅ **Page Numbering**
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(10);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
   }
 
   return doc;
