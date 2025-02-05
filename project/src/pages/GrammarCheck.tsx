@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import { CheckCircle } from 'lucide-react';
-import ProcessingOptions from '../components/ProcessingOptions';
 import MarkdownResult from '../components/MarkdownResult'; // Assuming you have a MarkdownResult component.
 
 export default function GrammarCheck() {
   const [text, setText] = useState('');
   const [result, setResult] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState('standard');
-  const [language, setLanguage] = useState('English');
 
-  const API_BASE_URL = 'https://ai-research-paper-backend.onrender.com';
+
+  const API_BASE_URL = 'http://127.0.0.5:8005';
 
   const handleProcess = async () => {
     setLoading(true);
@@ -18,16 +16,22 @@ export default function GrammarCheck() {
       const response = await fetch(`${API_BASE_URL}/grammar-check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, mode, language, options: '' }),
+        body: JSON.stringify({ text }), // Pass user input
       });
+  
+      if (!response.ok) {
+        throw new Error('Failed to fetch data');
+      }
+  
       const data = await response.json();
-      setResult(data.result || '');
+      setResult(data.result || 'No corrections found.');
     } catch (error) {
       setResult('Error processing request. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -38,12 +42,7 @@ export default function GrammarCheck() {
       </div>
 
       <div className="bg-white rounded-xl shadow-lg p-6">
-        <ProcessingOptions
-          mode={mode}
-          language={language}
-          setMode={setMode}
-          setLanguage={setLanguage}
-        />
+      
 
         <div className="mb-6">
           <textarea
