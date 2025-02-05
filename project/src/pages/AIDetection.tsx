@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import FileUpload from '../components/FileUpload';
-import ProcessingOptions from '../components/ProcessingOptions';
 import MarkdownResult from '../components/MarkdownResult';
 
 export default function AIDetection() {
@@ -10,11 +9,9 @@ export default function AIDetection() {
   const [result, setResult] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'text' | 'file'>('text');
-  const [mode, setMode] = useState('standard');
-  const [language, setLanguage] = useState('English');
-
-  const API_BASE_URL = 'https://ai-research-paper-backend.onrender.com';
-
+  
+  const API_BASE_URL = 'https://scholarmatefunc-828367063456.asia-south1.run.app';
+  
   const handleProcess = async () => {
     setLoading(true);
     try {
@@ -22,17 +19,15 @@ export default function AIDetection() {
         const response = await fetch(`${API_BASE_URL}/AI_detect_text`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, mode, language, options: '' }),
+          body: JSON.stringify({ text }), // Fix: Properly structure the request body
         });
         const data = await response.json();
         setResult(data.result || '');
       } else if (file) {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('mode', mode);
-        formData.append('language', language);
-
-        const response = await fetch(`${API_BASE_URL}/AI_detect_pdf`, {
+        
+        const response = await fetch('https://us-central1-scholar-mate-449005.cloudfunctions.net/ai-detection', {
           method: 'POST',
           body: formData,
         });
@@ -53,7 +48,7 @@ export default function AIDetection() {
         <h1 className="text-3xl font-bold text-gray-800">AI Content Detection</h1>
         <p className="text-gray-600 mt-2">Detect AI-generated content with confidence scores</p>
       </div>
-
+      
       <div className="bg-white rounded-xl shadow-lg p-6">
         <div className="flex mb-6 space-x-4">
           <button
@@ -77,14 +72,7 @@ export default function AIDetection() {
             File Upload
           </button>
         </div>
-
-        <ProcessingOptions
-          mode={mode}
-          language={language}
-          setMode={setMode}
-          setLanguage={setLanguage}
-        />
-
+        
         <div className="mb-6">
           {activeTab === 'text' ? (
             <textarea
