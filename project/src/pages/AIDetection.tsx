@@ -10,7 +10,7 @@ export default function AIDetection() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'text' | 'file'>('text');
   
-  const API_BASE_URL = 'https://scholarmatefunc-828367063456.asia-south1.run.app';
+  const API_BASE_URL = 'https://us-central1-scholar-mate-449005.cloudfunctions.net/ai-detection';
   
   const handleProcess = async () => {
     setLoading(true);
@@ -27,7 +27,7 @@ export default function AIDetection() {
         const formData = new FormData();
         formData.append('file', file);
         
-        const response = await fetch('https://us-central1-scholar-mate-449005.cloudfunctions.net/ai-detection', {
+        const response = await fetch(`${API_BASE_URL}/AI_detect_pdf`, {
           method: 'POST',
           body: formData,
         });
