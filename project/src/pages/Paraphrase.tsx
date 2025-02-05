@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Type } from 'lucide-react';
 import FileUpload from '../components/FileUpload';
 import ProcessingOptions from '../components/ProcessingOptions';
-import MarkdownResult from '../components/MarkdownResult'; // Import MarkdownResult
-import { formatResult } from '../utils/formatResult'; // Import formatResult for consistent formatting
+import MarkdownResult from '../components/MarkdownResult';
+import { formatResult } from '../utils/formatResult';
 
 export default function Paraphrase() {
   const [text, setText] = useState('');
@@ -11,10 +11,9 @@ export default function Paraphrase() {
   const [result, setResult] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'text' | 'file'>('text');
-  const [mode, setMode] = useState('standard');
   const [language, setLanguage] = useState('English');
 
-  const API_BASE_URL = 'https://ai-research-paper-backend.onrender.com';
+  const API_BASE_URL = 'http://127.0.0.5:8005';
 
   const handleProcess = async () => {
     setLoading(true);
@@ -23,23 +22,28 @@ export default function Paraphrase() {
         const response = await fetch(`${API_BASE_URL}/paraphrase-text`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, mode, language, options: '' }),
+          body: JSON.stringify({ 
+            text, 
+            lang: language // Fix: Use correct parameter name matching backend
+          }),
         });
         const data = await response.json();
         setResult(data.result || '');
-      } else if (file) {
+      }else if (file) {
         const formData = new FormData();
+        formData.append('lang', language);
         formData.append('file', file);
-        formData.append('mode', mode);
-        formData.append('language', language);
-
+         // Ensure language is correctly appended
+      
         const response = await fetch(`${API_BASE_URL}/paraphrase-pdf`, {
           method: 'POST',
           body: formData,
         });
+      
         const data = await response.json();
         setResult(data.result || '');
       }
+      
     } catch (error) {
       setResult('Error processing request. Please try again.');
     } finally {
@@ -80,9 +84,7 @@ export default function Paraphrase() {
         </div>
 
         <ProcessingOptions
-          mode={mode}
           language={language}
-          setMode={setMode}
           setLanguage={setLanguage}
         />
 
