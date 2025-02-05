@@ -1,4 +1,9 @@
-export const formatResult = (result: string, type: 'plagiarism' | 'grammar' | 'paraphrase' | 'summary' | 'ai-detection' | 'paper-review'): string => {
+export const formatResult = (
+  result: string,
+  type: 'plagiarism' | 'grammar' | 'paraphrase' | 'summary' | 'ai-detection' | 'paper-review'
+): string => {
+  if (!result.trim()) return `# ${type.replace('-', ' ').toUpperCase()} Report\n\n*No data available.*`;
+
   switch (type) {
     case 'plagiarism':
       return formatPlagiarismResult(result);
@@ -17,20 +22,21 @@ export const formatResult = (result: string, type: 'plagiarism' | 'grammar' | 'p
   }
 };
 
+// ✅ **Plagiarism Formatting**
 const formatPlagiarismResult = (result: string): string => {
-  return `# Plagiarism Detection Report
+  return `# 🛑 Plagiarism Detection Report
 
-${result.split('\n').map(line => {
-  if (line.includes('Plagiarism detected:')) {
-    return `## ${line}\n`;
-  }
-  if (line.includes('Source:')) {
-    return `> ${line}\n`;
-  }
-  return line;
-}).join('\n')}`;
+${result
+  .split('\n')
+  .map(line => {
+    if (line.includes('Plagiarism detected:')) return `## 🚨 ${line}\n`;
+    if (line.includes('Source:')) return `> 📌 ${line}\n`;
+    return line;
+  })
+  .join('\n')}`;
 };
 
+// ✅ **Paper Review Formatting**
 const formatPaperReviewResult = (result: string): string => {
   const sections = [
     'Abstract Analysis',
@@ -47,60 +53,60 @@ const formatPaperReviewResult = (result: string): string => {
     'Summary of Review'
   ];
 
-  let formattedResult = '# Paper Review Report\n\n';
-  
+  let formattedResult = '# 📄 Paper Review Report\n\n';
+
   sections.forEach(section => {
     const regex = new RegExp(`${section}:?([\\s\\S]*?)(?=${sections.join('|')}|$)`);
     const match = result.match(regex);
     if (match && match[1].trim()) {
-      formattedResult += `## ${section}\n\n${match[1].trim()}\n\n`;
+      formattedResult += `## 🔹 ${section}\n\n${match[1].trim()}\n\n`;
     }
   });
 
   return formattedResult;
 };
 
+// ✅ **Grammar Check Formatting**
 const formatGrammarResult = (result: string): string => {
-  return `# Grammar Check Results
+  return `# ✍️ Grammar Check Results
 
-${result.split('\n').map(line => {
-  if (line.includes('Error:')) {
-    return `## Error Found\n${line.replace('Error:', '')}\n`;
-  }
-  if (line.includes('Suggestion:')) {
-    return `> Suggestion: ${line.replace('Suggestion:', '')}\n`;
-  }
-  return line;
-}).join('\n')}`;
+${result
+  .split('\n')
+  .map(line => {
+    if (line.includes('Error:')) return `## ❌ Error Found\n${line.replace('Error:', '').trim()}\n`;
+    if (line.includes('Suggestion:')) return `> 💡 Suggestion: ${line.replace('Suggestion:', '').trim()}\n`;
+    return line;
+  })
+  .join('\n')}`;
 };
 
+// ✅ **Paraphrased Text Formatting**
 const formatParaphraseResult = (result: string): string => {
-  return `# Paraphrased Text
-
-## Original Text
-${result.split('Paraphrased version:')[0]}
-
-## Paraphrased Version
-${result.split('Paraphrased version:')[1] || ''}`;
+  const parts = result.split('Paraphrased version:');
+  return `# 🔄 Paraphrased Text\n\n## 🔹 Original Text\n${parts[0].trim() || '*No original text provided.*'}`;
 };
 
+// ✅ **Summary Formatting**
 const formatSummaryResult = (result: string): string => {
-  return `# Text Summary
+  return `# 📌 Text Summary
 
-## Key Points
-${result.split('\n').map(line => `- ${line}`).join('\n')}`;
+## 🔹 Key Points
+${result
+  .split('\n')
+  .map(line => (line.trim() ? `- ${line.trim()}` : ''))
+  .join('\n')}`;
 };
 
+// ✅ **AI Content Detection Formatting**
 const formatAIDetectionResult = (result: string): string => {
-  return `# AI Content Detection Results
+  return `# 🤖 AI Content Detection Results
 
-${result.split('\n').map(line => {
-  if (line.includes('Confidence:')) {
-    return `## Detection Confidence\n${line}\n`;
-  }
-  if (line.includes('Analysis:')) {
-    return `### Detailed Analysis\n${line.replace('Analysis:', '')}\n`;
-  }
-  return line;
-}).join('\n')}`;
+${result
+  .split('\n')
+  .map(line => {
+    if (line.includes('Confidence:')) return `## 🎯 Detection Confidence\n${line.trim()}\n`;
+    if (line.includes('Analysis:')) return `### 📊 Detailed Analysis\n${line.replace('Analysis:', '').trim()}\n`;
+    return line;
+  })
+  .join('\n')}`;
 };
