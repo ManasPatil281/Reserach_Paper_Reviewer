@@ -8,7 +8,7 @@ export default function GrammarCheck() {
   const [loading, setLoading] = useState(false);
 
 
-  const API_BASE_URL = 'http://127.0.0.5:8005';
+  const API_BASE_URL = 'https://us-central1-scholar-mate-449005.cloudfunctions.net/ai-detection';
 
   const handleProcess = async () => {
     setLoading(true);
