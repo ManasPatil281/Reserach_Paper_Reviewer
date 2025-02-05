@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { FileText, AlertTriangle, CheckCircle, Type, FileSearch, FileStack, Sparkles, ScrollText } from 'lucide-react';
+import { FileText, AlertTriangle, CheckCircle, Type, FileSearch, FileStack, Sparkles, ScrollText, Moon, Sun } from 'lucide-react';
 import AIDetection from './pages/AIDetection';
 import GrammarCheck from './pages/GrammarCheck';
 import Paraphrase from './pages/Paraphrase';
 import PlagiarismCheck from './pages/PlagiarismCheck';
 import Summarize from './pages/Summarize';
 import PaperReviewer from './pages/PaperReviewer';
+
+
 
 const features = [
   { icon: AlertTriangle, name: 'AI Detection', path: '/ai-detection', description: 'Detect AI-generated content with confidence scores', image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=800&auto=format&fit=crop' },
@@ -18,6 +20,7 @@ const features = [
 ];
 
 function App() {
+ 
   return (
     <Router>
       <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-purple-100">
@@ -54,7 +57,19 @@ function App() {
             <Route path="/summarize" element={<Summarize />} />
             <Route path="/paper-reviewer" element={<PaperReviewer />} />
           </Routes>
+          
         </main>
+        <footer className="bg-white/80 backdrop-blur-md shadow-md py-6">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-gray-700">
+              Project Made By: 
+              <span className="font-semibold text-indigo-600 ml-2">
+                Manas Patil, Ayush Attarde, Soham Kamathi, 
+                Gaurav Kuthwal, Ashutoshkumar Tripathi
+              </span>
+            </p>
+          </div>
+        </footer>
       </div>
     </Router>
   );
@@ -138,14 +153,14 @@ function HomePage() {
               icon: '🌍',
             },
             {
-              title: 'Fast Processing',
-              description: 'Get results quickly with our optimized processing pipeline',
-              icon: '⚡',
+              title: 'Secure & Private',
+              description: 'No login required and your data is never stored',
+              icon: '🔒',
             },
             {
-              title: 'Secure & Private',
-              description: 'Your data is encrypted and handled with utmost security',
-              icon: '🔒',
+              title: 'Fast Processing',
+              description: 'Review your  Papers in seconds with high accuracy',
+              icon: '⚡',
             },
             {
               title: 'Easy to Use',
