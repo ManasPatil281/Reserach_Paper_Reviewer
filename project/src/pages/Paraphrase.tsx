@@ -13,7 +13,7 @@ export default function Paraphrase() {
   const [activeTab, setActiveTab] = useState<'text' | 'file'>('text');
   const [language, setLanguage] = useState('English');
 
-  const API_BASE_URL = 'http://127.0.0.5:8005';
+  const API_BASE_URL = 'https://us-central1-scholar-mate-449005.cloudfunctions.net/ai-detection';
 
   const handleProcess = async () => {
     setLoading(true);
