@@ -11,10 +11,10 @@ export default function Summarize() {
   const [result, setResult] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'text' | 'file'>('text');
-  const [mode, setMode] = useState('standard');
+ 
   const [language, setLanguage] = useState('English');
 
-  const API_BASE_URL = 'https://ai-research-paper-backend.onrender.com';
+  const API_BASE_URL = ' http://127.0.0.5:8005';
 
   const handleProcess = async () => {
     setLoading(true);
@@ -23,14 +23,13 @@ export default function Summarize() {
         const response = await fetch(`${API_BASE_URL}/summarize-text`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, mode, language, options: '' }),
+          body: JSON.stringify({ text, lang: language }),
         });
         const data = await response.json();
         setResult(data.summary || '');
       } else if (file) {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('mode', mode);
         formData.append('language', language);
 
         const response = await fetch(`${API_BASE_URL}/summarize-file`, {
@@ -80,9 +79,9 @@ export default function Summarize() {
         </div>
 
         <ProcessingOptions
-          mode={mode}
+    
           language={language}
-          setMode={setMode}
+        
           setLanguage={setLanguage}
         />
 
