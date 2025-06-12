@@ -1,0 +1,16 @@
+functions-framework==3.*
+flask
+google-cloud-storage
+werkzeug
+langchain
+langchain-core
+langchain-community
+langchain-groq
+langchain-huggingface
+langchain-google-genai
+PyMuPDF
+huggingface_hub
+faiss-cpu
+google-generativeai
+torch
+transformers
