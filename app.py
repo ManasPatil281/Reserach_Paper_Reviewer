@@ -16,6 +16,7 @@ from pydantic import BaseModel
 import aiofiles
 import traceback
 import logging
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -33,8 +34,7 @@ def initialize_embeddings():
     
     try:
         # Try HuggingFace embeddings first
-        from langchain_huggingface import HuggingFaceEmbeddings
-        embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        embeddings = HuggingFaceEndpointEmbeddings(model="sentence-transformers/all-mpnet-base-v2",huggingfacehub_api_token='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')
         logger.info("Successfully initialized HuggingFace embeddings")
         return embeddings
     except Exception as e:
@@ -68,22 +68,22 @@ except Exception as e:
     embeddings = None
 
 # API Keys and Models
-Groq_API = "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"
+Groq_API = "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"  # Updated API key
 
 # Initialize models with error handling
 def initialize_models():
     """Initialize LLM models with error handling"""
     try:
-        llm = ChatGroq(groq_api_key=Groq_API, model_name="llama-3.3-70b-versatile")
-        llm2 = ChatGroq(groq_api_key=Groq_API, model_name="mixtral-8x7b-32768")
+        llm = ChatGroq(groq_api_key=Groq_API, model_name="llama-3.1-70b-versatile")  # Updated model name
+        llm2 = ChatGroq(groq_api_key=Groq_API, model_name='llama-3.1-8b-instant')
         logger.info("Successfully initialized all LLM models")
-        return llm, llm2, llm3
+        return llm, llm2
     except Exception as e:
         logger.error(f"Error initializing models: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to initialize AI models: {str(e)}")
 
 # Initialize models
-llm, llm2, llm3 = initialize_models()
+llm, llm2 = initialize_models()
 
 app = FastAPI()
 
@@ -116,6 +116,7 @@ def check_embeddings():
         )
 
 async def process_pdf_file(file, process_func):
+    temp_pdf_path = None
     try:
         # Save uploaded file to a temporary file
         async with aiofiles.tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
@@ -127,11 +128,25 @@ async def process_pdf_file(file, process_func):
         return result
 
     except Exception as e:
+        error_msg = str(e)
+        if "401" in error_msg or "Invalid API Key" in error_msg:
+            raise HTTPException(
+                status_code=401, 
+                detail="Invalid API key. Please check your Groq API key configuration."
+            )
+        elif "429" in error_msg or "quota" in error_msg.lower():
+            raise HTTPException(
+                status_code=429, 
+                detail="API quota exhausted. Please try again later."
+            )
         raise HTTPException(status_code=500, detail=f"Error processing file: {e}")
     finally:
         # Remove the temporary file after processing
-        if os.path.exists(temp_pdf_path):
-            os.remove(temp_pdf_path)
+        if temp_pdf_path and os.path.exists(temp_pdf_path):
+            try:
+                os.remove(temp_pdf_path)
+            except Exception as cleanup_error:
+                logger.warning(f"Failed to cleanup temp file: {cleanup_error}")
 
 @app.get("/health")
 async def health_check():
@@ -187,7 +202,7 @@ async def detect_ai_generated(file: UploadFile = File(...)):
             ])
 
             # Create chains
-            question_answer_chain = create_stuff_documents_chain(llm3, qa_prompt)
+            question_answer_chain = create_stuff_documents_chain(llm2, qa_prompt)
             rag_chain = create_retrieval_chain(retriever, question_answer_chain)
 
             # Generate response
@@ -225,9 +240,14 @@ async def detect_text(request: TextRequest):
     )
 
     try:
-        response = llm3.invoke(system_prompt)
+        response = llm2.invoke(system_prompt)
         return {"result": response.content}
     except Exception as e:
+        error_msg = str(e)
+        if "401" in error_msg or "Invalid API Key" in error_msg:
+            raise HTTPException(status_code=401, detail="Invalid Groq API key. Please check configuration.")
+        elif "429" in error_msg:
+            raise HTTPException(status_code=429, detail="API rate limit exceeded. Please try again later.")
         raise HTTPException(status_code=500, detail=f"Error detecting AI-generated content: {e}")
 
 @app.post("/grammar-check")
@@ -246,9 +266,14 @@ async def grammar_check(request: TextRequest):
     )
 
     try:
-        response = llm3.invoke(system_prompt)
+        response = llm2.invoke(system_prompt)
         return {"result": response.content}
     except Exception as e:
+        error_msg = str(e)
+        if "401" in error_msg or "Invalid API Key" in error_msg:
+            raise HTTPException(status_code=401, detail="Invalid Groq API key. Please check configuration.")
+        elif "429" in error_msg:
+            raise HTTPException(status_code=429, detail="API rate limit exceeded. Please try again later.")
         raise HTTPException(status_code=500, detail=f"Error performing grammar check: {e}")
 
 @app.post("/paraphrase-text")
@@ -265,9 +290,14 @@ async def paraphrase_text(request: TextRequestLang):
     )
 
     try:
-        response = llm3.invoke(system_prompt)
+        response = llm2.invoke(system_prompt)
         return {"result": response.content}
     except Exception as e:
+        error_msg = str(e)
+        if "401" in error_msg or "Invalid API Key" in error_msg:
+            raise HTTPException(status_code=401, detail="Invalid Groq API key. Please check configuration.")
+        elif "429" in error_msg:
+            raise HTTPException(status_code=429, detail="API rate limit exceeded. Please try again later.")
         raise HTTPException(status_code=500, detail=f"Error paraphrasing text: {e}")
 
 @app.post("/paraphrase-pdf")
@@ -298,7 +328,7 @@ async def paraphrase_pdf(file: UploadFile = File(...)):
                 ("human", "{context}\n{input}"),
             ])
 
-            question_answer_chain = create_stuff_documents_chain(llm3, qa_prompt)
+            question_answer_chain = create_stuff_documents_chain(llm2, qa_prompt)
             rag_chain = create_retrieval_chain(retriever, question_answer_chain)
             response = rag_chain.invoke({"input": 'paraphrase the text'})
             return response["answer"]
@@ -361,7 +391,7 @@ async def detect_plagiarism(file: UploadFile = File(...)):
         ])
 
         # Assume the LLM object is preloaded
-        question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
+        question_answer_chain = create_stuff_documents_chain(llm2, qa_prompt)
         rag_chain = create_retrieval_chain(retriever, question_answer_chain)
 
         # Input text for detection
@@ -387,9 +417,14 @@ async def summarize_text_endpoint(request: TextRequestLang):
         )
 
 
-        response = llm3.invoke(system_prompt)
+        response = llm2.invoke(system_prompt)
         return {"summary": response.content}
     except Exception as e:
+        error_msg = str(e)
+        if "401" in error_msg or "Invalid API Key" in error_msg:
+            raise HTTPException(status_code=401, detail="Invalid Groq API key. Please check configuration.")
+        elif "429" in error_msg:
+            raise HTTPException(status_code=429, detail="API rate limit exceeded. Please try again later.")
         # Log the full error traceback
         logger.error(f"Summarize Text Error: {str(e)}")
         logger.error(traceback.format_exc())
@@ -430,7 +465,7 @@ async def summarize_file(file: UploadFile = File(...),  language: str = "English
             ])
 
             # Assume the LLM object is preloaded
-            question_answer_chain = create_stuff_documents_chain(llm3, qa_prompt)
+            question_answer_chain = create_stuff_documents_chain(llm2, qa_prompt)
             rag_chain = create_retrieval_chain(retriever, question_answer_chain)
 
             # Summarize the document
@@ -500,7 +535,7 @@ async def review_file(file: UploadFile = File(...)):
         ])
 
         # Assume the LLM object is preloaded
-        question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
+        question_answer_chain = create_stuff_documents_chain(llm2, qa_prompt)
         rag_chain = create_retrieval_chain(retriever, question_answer_chain)
 
         # Summarize the document
