@@ -550,7 +550,8 @@ async def review_file(file: UploadFile = File(...)):
 
 def main():
     import uvicorn
-    uvicorn.run(app, host="127.0.0.5", port=8005)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
 if __name__ == "__main__":
     main()
