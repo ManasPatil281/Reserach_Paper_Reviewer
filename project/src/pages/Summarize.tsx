@@ -14,7 +14,7 @@ export default function Summarize() {
  
   const [language, setLanguage] = useState('English');
 
-  const API_BASE_URL = 'https://us-central1-scholar-mate-449005.cloudfunctions.net/ai-detection';
+  const API_BASE_URL = 'https://reserach-paper-reviewer.onrender.com';
 
   const handleProcess = async () => {
     setLoading(true);
