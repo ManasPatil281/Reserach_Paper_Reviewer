@@ -548,13 +548,5 @@ async def review_file(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error summarizing file content: {e}")
 
-def main():
-    import uvicorn
-    import os
-    port = int(os.environ.get("PORT"))
-    uvicorn.run(app, host="0.0.0.0", port=port)
 
 
-
-if __name__ == "__main__":
-    main()
