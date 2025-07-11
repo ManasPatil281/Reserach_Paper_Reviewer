@@ -10,7 +10,7 @@ export default function PaperReviewer() {
   const [result, setResult] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  const API_BASE_URL = 'https://us-central1-scholar-mate-449005.cloudfunctions.net/ai-detection';
+  const API_BASE_URL = 'https://reserach-paper-reviewer.onrender.com/';
 
   const handleProcess = async () => {
     if (!file) return;
