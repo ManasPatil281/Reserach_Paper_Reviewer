@@ -8,7 +8,7 @@ export default function GrammarCheck() {
   const [loading, setLoading] = useState(false);
 
 
-  const API_BASE_URL = 'https://reserach-paper-reviewer.onrender.com/ai-detection';
+  const API_BASE_URL = 'https://reserach-paper-reviewer.onrender.com';
 
   const handleProcess = async () => {
     setLoading(true);
