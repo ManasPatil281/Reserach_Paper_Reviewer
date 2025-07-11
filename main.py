@@ -5,7 +5,6 @@ from langchain_groq import ChatGroq
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
@@ -19,8 +18,6 @@ import aiofiles
 import traceback
 import logging
 
-
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -28,18 +25,70 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
+# Initialize embeddings with fallback
+embeddings = None
 
+def initialize_embeddings():
+    """Initialize embeddings with fallback options"""
+    global embeddings
+    
+    try:
+        # Try HuggingFace embeddings first
+        from langchain_huggingface import HuggingFaceEmbeddings
+        embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        logger.info("Successfully initialized HuggingFace embeddings")
+        return embeddings
+    except Exception as e:
+        logger.warning(f"Failed to initialize HuggingFace embeddings: {str(e)}")
+        
+    try:
+        # Fallback to OpenAI embeddings if available
+        from langchain_openai import OpenAIEmbeddings
+        embeddings = OpenAIEmbeddings()
+        logger.info("Successfully initialized OpenAI embeddings")
+        return embeddings
+    except Exception as e:
+        logger.warning(f"Failed to initialize OpenAI embeddings: {str(e)}")
+    
+    try:
+        # Final fallback to fake embeddings for development
+        from langchain_community.embeddings.fake import FakeEmbeddings
+        embeddings = FakeEmbeddings(size=384)
+        logger.warning("Using fake embeddings - this is for development only")
+        return embeddings
+    except Exception as e:
+        logger.error(f"Failed to initialize any embeddings: {str(e)}")
+        embeddings = None
+        return None
 
+# Initialize embeddings
+try:
+    embeddings = initialize_embeddings()
+except Exception as e:
+    logger.error(f"Critical error initializing embeddings: {str(e)}")
+    embeddings = None
 
-embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-Groq_API="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"
+# API Keys and Models
+Groq_API = "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"
 
-llm = ChatGroq(groq_api_key=Groq_API, model_name="llama-3.3-70b-versatile")
-llm2 = ChatGroq(groq_api_key=Groq_API, model_name="mixtral-8x7b-32768")
-llm3 = ChatGoogleGenerativeAI(
-    model="gemini-1.5-pro",
-    api_key=os.getenv("GOOGLE_API_KEY", "AIzaSyCld0oOHsbSg7pa0WIvfIU-U7eICexYmhE")
-)
+# Initialize models with error handling
+def initialize_models():
+    """Initialize LLM models with error handling"""
+    try:
+        llm = ChatGroq(groq_api_key=Groq_API, model_name="llama-3.3-70b-versatile")
+        llm2 = ChatGroq(groq_api_key=Groq_API, model_name="mixtral-8x7b-32768")
+        llm3 = ChatGoogleGenerativeAI(
+            model="gemini-1.5-pro",
+            api_key=os.getenv("GOOGLE_API_KEY", "AIzaSyCld0oOHsbSg7pa0WIvfIU-U7eICexYmhE")
+        )
+        logger.info("Successfully initialized all LLM models")
+        return llm, llm2, llm3
+    except Exception as e:
+        logger.error(f"Error initializing models: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to initialize AI models: {str(e)}")
+
+# Initialize models
+llm, llm2, llm3 = initialize_models()
 
 app = FastAPI()
 
@@ -63,6 +112,14 @@ class TextRequestLang(BaseModel):
 class Language(BaseModel):
     lang: str
 
+def check_embeddings():
+    """Check if embeddings are available and raise error if not"""
+    if embeddings is None:
+        raise HTTPException(
+            status_code=503, 
+            detail="Embeddings service is not available. Please install required dependencies: pip install sentence-transformers"
+        )
+
 async def process_pdf_file(file, process_func):
     try:
         # Save uploaded file to a temporary file
@@ -81,8 +138,31 @@ async def process_pdf_file(file, process_func):
         if os.path.exists(temp_pdf_path):
             os.remove(temp_pdf_path)
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    try:
+        status = {
+            "status": "ok",
+            "embeddings": "available" if embeddings is not None else "unavailable",
+            "models": "initialized"
+        }
+        
+        if embeddings is None:
+            status["warning"] = "Embeddings not available - some features may not work"
+            
+        return status
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"status": "error", "message": str(e)}
+        )
+
 @app.post("/AI_detect_pdf")
 async def detect_ai_generated(file: UploadFile = File(...)):
+    # Check embeddings availability for RAG operations
+    check_embeddings()
+    
     async def process_pdf(temp_pdf_path):
         try:
             # Define system prompt for AI detection
@@ -128,9 +208,6 @@ async def detect_ai_generated(file: UploadFile = File(...)):
         if not file.filename.lower().endswith('.pdf'):
             raise HTTPException(status_code=400, detail="Only PDF files are allowed")
 
-        # Save the uploaded file to a temporary location
-
-
         # Process the PDF for AI detection
         ai_detection_result = await process_pdf_file(file, process_pdf)
         return {"result": ai_detection_result}
@@ -140,7 +217,6 @@ async def detect_ai_generated(file: UploadFile = File(...)):
         logger.error(f"AI Detect PDF Error: {str(e)}")
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error detecting AI-generated content in PDF: {str(e)}")
-
 
 @app.post("/AI_detect_text")
 async def detect_text(request: TextRequest):
@@ -201,6 +277,9 @@ async def paraphrase_text(request: TextRequestLang):
 
 @app.post("/paraphrase-pdf")
 async def paraphrase_pdf(file: UploadFile = File(...)):
+    # Check embeddings availability
+    check_embeddings()
+    
     async def process_pdf(temp_pdf_path):
         try:
             system_prompt = (
@@ -245,12 +324,14 @@ async def paraphrase_pdf(file: UploadFile = File(...)):
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error paraphrasing PDF content: {str(e)}")
 
-
 @app.post("/detect-plagiarism")
 async def detect_plagiarism(file: UploadFile = File(...)):
     """
     Detects plagiarism in an uploaded PDF file and provides a detailed report.
     """
+    # Check embeddings availability
+    check_embeddings()
+    
     async def process_pdf(temp_pdf_path):
         # Load the PDF using PyPDFLoader
         loader = PyPDFLoader(temp_pdf_path)
@@ -300,7 +381,6 @@ async def detect_plagiarism(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error detecting plagiarism: {e}")
 
-
 @app.post("/summarize-text")
 async def summarize_text_endpoint(request: TextRequestLang):
     try:
@@ -320,9 +400,11 @@ async def summarize_text_endpoint(request: TextRequestLang):
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error summarizing text: {str(e)}")
 
-
 @app.post("/summarize-file")
 async def summarize_file(file: UploadFile = File(...),  language: str = "English"):
+    # Check embeddings availability
+    check_embeddings()
+    
     async def process_pdf(temp_pdf_path):
         try:
             # Load the PDF using PyPDFLoader
@@ -376,9 +458,11 @@ async def summarize_file(file: UploadFile = File(...),  language: str = "English
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error summarizing file content: {str(e)}")
 
-
 @app.post("/review-file")
 async def review_file(file: UploadFile = File(...)):
+    # Check embeddings availability
+    check_embeddings()
+    
     async def process_pdf(temp_pdf_path):
         # Load the PDF using PyPDFLoader
         loader = PyPDFLoader(temp_pdf_path)
@@ -397,7 +481,7 @@ async def review_file(file: UploadFile = File(...)):
             "Conduct an in-depth review of the provided research paper and generate a comprehensive evaluation report. "
             "The report should include:\n\n"
             "1. **Abstract Analysis**: Assess the clarity, relevance, and completeness of the abstract.\n"
-            "2. **Introduction & Objectives**: Evaluate the introduction’s effectiveness in presenting the research problem, objectives, and significance.\n"
+            "2. **Introduction & Objectives**: Evaluate the introduction's effectiveness in presenting the research problem, objectives, and significance.\n"
             "3. **Literature Review**: Examine the depth, breadth, and credibility of referenced works. Identify gaps or missing sources.\n"
             "4. **Methodology Assessment**: Critique the research design, reproducibility, and clarity of the methodology section.\n"
             "5. **Results & Data Analysis**: Assess the correctness, clarity, and depth of result interpretation.\n"
@@ -409,8 +493,8 @@ async def review_file(file: UploadFile = File(...)):
             "   - External sources where similarities were found.\n"
             "   - Highlighted plagiarized phrases with rephrasing suggestions.\n"
             "9. **Suggestions for Improvement**: Offer actionable feedback on clarity, depth, and originality.\n"
-            "10. **Strengths & Unique Contributions**: Highlight the paper’s originality and strong aspects.\n"
-            "11. **Formatting & Presentation**: Assess the paper’s grammar, organization, and adherence to academic formatting standards.\n"
+            "10. **Strengths & Unique Contributions**: Highlight the paper's originality and strong aspects.\n"
+            "11. **Formatting & Presentation**: Assess the paper's grammar, organization, and adherence to academic formatting standards.\n"
             "12. **Overall Summary & Final Score**: Provide a brief summary with a final evaluation score.\n\n"
             "Use code blocks for key highlights (not actual code), structured tables for clarity, and ensure a downloadable review report is available."
         )
@@ -433,7 +517,6 @@ async def review_file(file: UploadFile = File(...)):
         return {"summary": paraphrased_text}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error summarizing file content: {e}")
-
 
 def main():
     import uvicorn
