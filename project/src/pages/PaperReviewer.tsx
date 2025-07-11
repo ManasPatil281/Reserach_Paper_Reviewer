@@ -10,7 +10,7 @@ export default function PaperReviewer() {
   const [result, setResult] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  const API_BASE_URL = 'https://reserach-paper-reviewer.onrender.com/';
+  const API_BASE_URL = 'https://reserach-paper-reviewer.onrender.com';
 
   const handleProcess = async () => {
     if (!file) return;
