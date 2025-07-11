@@ -148,6 +148,11 @@ async def process_pdf_file(file, process_func):
             except Exception as cleanup_error:
                 logger.warning(f"Failed to cleanup temp file: {cleanup_error}")
 
+@app.get("/")
+async def root():
+    return {"message": "Server is up. Use the proper endpoints like /health"}
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
