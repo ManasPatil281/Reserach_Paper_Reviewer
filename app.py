@@ -8,7 +8,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
-from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
 import tempfile
 from fastapi import UploadFile, File
@@ -77,10 +76,6 @@ def initialize_models():
     try:
         llm = ChatGroq(groq_api_key=Groq_API, model_name="llama-3.3-70b-versatile")
         llm2 = ChatGroq(groq_api_key=Groq_API, model_name="mixtral-8x7b-32768")
-        llm3 = ChatGoogleGenerativeAI(
-            model="gemini-1.5-pro",
-            api_key=os.getenv("GOOGLE_API_KEY", "AIzaSyCld0oOHsbSg7pa0WIvfIU-U7eICexYmhE")
-        )
         logger.info("Successfully initialized all LLM models")
         return llm, llm2, llm3
     except Exception as e:
