@@ -71,7 +71,7 @@ except Exception as e:
     embeddings = None
 
 # API Keys and Models
-Groq_API = os.getenv("Groq_API") # Updated API key
+Groq_API = os.getenv("GROQ_api_key_Resume") # Updated API key
 
 # Initialize models with error handling
 def initialize_models():
