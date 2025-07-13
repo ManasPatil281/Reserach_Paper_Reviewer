@@ -27,14 +27,17 @@ load_dotenv()
 
 # Initialize embeddings with fallback
 embeddings = None
+HF_TOKEN = os.getenv("HF_TOKEN")
+
 
 def initialize_embeddings():
     """Initialize embeddings with fallback options"""
     global embeddings
     
+    
     try:
         # Try HuggingFace embeddings first
-        embeddings = HuggingFaceEndpointEmbeddings(model="sentence-transformers/all-mpnet-base-v2",huggingfacehub_api_token='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')
+        embeddings = HuggingFaceEndpointEmbeddings(model="sentence-transformers/all-mpnet-base-v2",huggingfacehub_api_token=HF_TOKEN)
         logger.info("Successfully initialized HuggingFace embeddings")
         return embeddings
     except Exception as e:
@@ -68,7 +71,7 @@ except Exception as e:
     embeddings = None
 
 # API Keys and Models
-Groq_API = "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"  # Updated API key
+Groq_API = os.getenv("Groq_API") # Updated API key
 
 # Initialize models with error handling
 def initialize_models():
