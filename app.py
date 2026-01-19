@@ -2,8 +2,8 @@ import os
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_groq import ChatGroq
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_classic.chains import create_retrieval_chain
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
@@ -555,6 +555,7 @@ async def review_file(file: UploadFile = File(...)):
         return {"summary": paraphrased_text}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error summarizing file content: {e}")
+
 
 
 
